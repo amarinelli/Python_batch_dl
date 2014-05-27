@@ -1,20 +1,66 @@
 ## DATA SOURCE: http://vterrain.org/Elevation/global.html
 
-import urllib, os, time, socket
+import urllib, os, time, socket, sys
+from Tkinter import Tk
+import tkFileDialog
 
-dlist = open(r"D:\Code\PythonScripts\demfiles\Files5.txt", "r")
-saveLoc = r"D:\Code\PythonScripts\demfiles\downloaded"
+Tk().withdraw() # keep the root window from appearing
+
+root = r'D:\Code\PythonScripts\demfiles'
+
+def inputExists(location):
+    if (location == ""):
+        sys.exit()
+    else:
+        return
+
+#options for opening a file
+file_opts = options = {}
+options['defaultextension'] = '.txt'
+options['filetypes'] = [('all files', '.*'), ('text files', '.txt')]
+options['initialdir'] = root
+options['title'] = 'Select download list txt file'
+
+listFile = tkFileDialog.askopenfilename(**file_opts)
+inputExists(listFile)
+
+print "Download list: " + listFile
+
+#options for saving to directory    
+dir_opts = options = {}
+options['initialdir'] = root
+options['mustexist'] = True
+options['title'] = 'Downloaded file(s) save location'
+
+saveLoc = tkFileDialog.askdirectory(**dir_opts)
+inputExists(saveLoc)
+
+print "Save directory: " + saveLoc
+
+#options for opening error list file
+errorfile_opts = options = {}
+options['defaultextension'] = '.txt'
+options['filetypes'] = [('all files', '.*'), ('text files', '.txt')]
+options['initialdir'] = root
+options['title'] = 'Select an error txt file'
+
+errorFile = tkFileDialog.askopenfilename(**errorfile_opts)
+inputExists(errorFile)
+
+print "Error txt File: " + errorFile + "\n"
+
+
+
+
+
 
 counter = 1
 current = 0
 errorList = []
 socket.setdefaulttimeout(30)
 
-with dlist as f:
-    total = sum(1 for _ in f)
-
-print "Total files to download = " + str(total) + "\n"
-
+#Functions
+    
 def progress_callback(blocks, block_size, total_size):
     global current
     if (current == 0):       
@@ -32,9 +78,17 @@ def percent(blocks, block_size, total_size):
     #total-size -> size of the file
 
     percentage = ((blocks*block_size)/float(total_size))*100
-    print ("%.2f %% complete" % percentage)    
+    print ("%.2f %% complete" % percentage)
 
-dlist = open(r"D:\Code\PythonScripts\demfiles\Files5.txt", "r")
+
+dlist = open(listFile, "r")
+
+with dlist as f:
+    total = sum(1 for _ in f)
+
+print "Total files to download = " + str(total) + "\n"    
+
+dlist = open(listFile, "r")
 
 for i in dlist:
     try:        
@@ -49,25 +103,29 @@ for i in dlist:
         print "------file downloaded------\n\n"
         counter +=1
         
-    except KeyboardInterrupt:
-        print "Cancelled file download with Keyboard\n"
-        errorList.append(i)
-        counter +=1
-        pass
+##    except KeyboardInterrupt:
+##        print "Cancelled file download with Keyboard\n"
+##        errorList.append(i)
+##        counter +=1
+##        pass
+    
     except socket.timeout:
-        print "TIMEOUT\n"
-        errorList.append(i)
+        print "TIMEOUT ERROR\n"
+        errorWrite = open(errorFile, "w")
+        errorWrite.write(i + "\n")
+        errorWrite.close()
+        #errorList.append(i)
         counter +=1
         pass
     except:
         "UNKNOWN ERROR"
     
-if (len(errorList) > 0):
-    print "DOWNLOAD COMPLETE, %s ERROR(S):" % len(errorList)
-    errorFile = open(r"D:\Code\PythonScripts\demfiles\errorList.txt", "w")
-    for e in errorList:        
-        errorFile.write(e + "\n")
-    errorFile.close()
+
+errorTotal = open(errorFile, "r")
+with errorTotal as e:
+    e_total = sum(1 for _ in e)
+if (e_total > 0):
+    print "DOWNLOAD COMPLETE, %s ERROR(S):" % e_total  
     
 else:
     print "DOWNLOAD COMPLETE"
