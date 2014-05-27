@@ -1,4 +1,4 @@
-Python_batch_dl
+Python Batch Downloader
 ===============
 
 Python script to batch download from list of HTTP addresses
